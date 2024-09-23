@@ -1,0 +1,21 @@
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: content-stg
+  namespace: istio-system
+  labels:
+    maistra.io/gateway-name: content-stg-gw
+    maistra.io/gateway-namespace: cont-stg
+    maistra.io/generated-by: ior
+  annotations:
+    maistra.io/original-host: 
+    #haproxy.router.openshift.io/timeout: 24h
+spec:
+  host: contents.stg.example.co.kr 
+  to:
+    kind: Service
+    name: istio-ingressgateway
+    weight: 100
+  port:
+    targetPort: http2
+  wildcardPolicy: None

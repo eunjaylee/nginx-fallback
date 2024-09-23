@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: content-stg
+spec:
+  ports:
+    - name: http
+      port: 80
+  selector:
+    app: content-stg
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: content-stg

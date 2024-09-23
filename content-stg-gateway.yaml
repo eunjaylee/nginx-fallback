@@ -1,0 +1,30 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: content-stg-gw
+spec:
+  selector:
+    istio: ingressgateway # use istio default controller
+  servers:
+    - port:
+        number: 80
+        name: http2
+        protocol: HTTP
+      hosts:
+      - contents.stg.example.co.kr
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: content-stg
+spec:
+  hosts: 
+   - '*'  # servicename or FQDN
+  gateways:
+    - content-stg-gw
+  http:
+  - route:  
+    - destination:
+        host: content-stg
+        port:
+          number: 8080

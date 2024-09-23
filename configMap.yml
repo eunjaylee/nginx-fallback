@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fallback-conf
+data:
+  fallback.conf: |
+    server {
+      listen 8080;
+      
+      location / {
+          add_header 'Access-Control-Allow-Origin' '*';
+          keepalive_timeout 0;
+
+          # 프록시 서버 A로 요청 전달
+          proxy_pass https://contents.dev.example.co.kr;
+          proxy_ssl_name contents.dev.example.co.kr;
+          proxy_set_header Host contents.dev.example.co.kr;
+        
+          proxy_ssl_server_name on;
+          proxy_ssl_session_reuse off;
+          add_header X-Cache $upstream_cache_status;
+
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        
+ 
+          # 기타 프록시 설정
+          proxy_intercept_errors on;
+        
+        # 프록시 A의 응답 코드가 404이면 프록시 서버 B로 전환
+        error_page 404 403 = @fallback;
+        
+      }
+
+      location @fallback {
+      
+          access_log /var/log/nginx/fallback.log main;
+          keepalive_timeout 0;
+          
+          proxy_pass https://contents.example.co.kr;
+          proxy_ssl_name contents.example.co.kr;
+          proxy_set_header Host contents.example.co.kr;
+            
+          proxy_ssl_server_name on;
+          proxy_ssl_session_reuse off;
+
+          # 프록시 B의 응답을 반환
+          proxy_set_header Host contents.example.co.kr;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          #break;
+      }
+    }

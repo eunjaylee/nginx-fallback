@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: content-stg
+  labels:
+    app: content-stg
+    service: content-stg
+spec:
+  ports:
+  - port: 8080
+    name: http
+  selector:
+    app: content-stg
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: content-stg
+  labels:
+    account: content-stg
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: content-stg
+spec:
+  selector:
+    matchLabels:
+      app: content-stg
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: 'true'
+      labels:
+        app: content-stg
+    spec:
+      serviceAccountName: content-stg
+      containers:
+      - name: content-stg
+        image: image-registry.openshift-image-registry.svc:5000/cont-stg/nginx-fallback:0.0.1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+          - mountPath: /etc/nginx/conf.d/fallback.conf
+            readOnly: true
+            name: config
+            subPath: fallback.conf # subPath를 지정하지 않으면 전체를 바꿔치기함
+      restartPolicy: Always
+      volumes:
+      - name: config
+        configMap:
+          name: fallback-conf

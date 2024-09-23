@@ -1,0 +1,53 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: ui-test-dev
+spec:
+  replicas: 1
+  strategy:
+    canary:
+      steps:
+        - setWeight: 100
+        - pause: {}
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: ui-test-dev
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
+        sidecar.jaegertracing.io/inject: "true"
+      labels:
+        app: ui-test-dev
+    spec:
+      # serviceAccountName: ui-test-dev
+      # imagePullSecrets:
+      #   - name: ecr-registry-push-pull
+      containers:
+        - name: ui-test-dev
+          image: nginx
+          envFrom:
+            - secretRef:
+                name : foui-dev-env
+          # image: image-registry.openshift-image-registry.svc:5000/cm-dev/fo-ui-test/foui:0.0.1
+          ports:
+            - containerPort: 3000
+              name: http
+          volumeMounts:
+            - name: foui-dev-env
+              mountPath: "/etc/foui-dev-env"
+              readOnly: true
+          resources:
+            limits:
+              cpu: 200m
+              memory: 500Mi
+            requests:
+              cpu: 100m
+              memory: 300Mi              
+      volumes:
+        - name: foui-dev-env
+          secret:
+            secretName: foui-dev-env
+            optional: false
+      restartPolicy: Always
